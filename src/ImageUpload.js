@@ -1,12 +1,11 @@
+import { Button } from "@material-ui/core";
 import React, { useState } from "react";
-import firebase from "firebase";
 import { storage, db } from "./firebase";
+import firebase from "firebase";
 import "./ImageUpload.css";
-import { Input, Button } from "@material-ui/core";
 
-const ImageUpload = ({ username }) => {
+function ImageUpload({ username }) {
   const [image, setImage] = useState(null);
-  const [url, setUrl] = useState("");
   const [progress, setProgress] = useState(0);
   const [caption, setCaption] = useState("");
 
@@ -17,35 +16,34 @@ const ImageUpload = ({ username }) => {
   };
 
   const handleUpload = () => {
-    const uploadTask = storage.ref(`images/${image.name}`).put(image);
-    uploadTask.on(
+    const UploadTask = storage.ref(`images/${image.name}`).put(image);
+    UploadTask.on(
       "state_changed",
       (snapshot) => {
-        // progress function ...
+        //progress function...
         const progress = Math.round(
           (snapshot.bytesTransferred / snapshot.totalBytes) * 100
         );
         setProgress(progress);
       },
       (error) => {
-        // Error function ...
+        //error function...
         console.log(error);
+        alert(error.message);
       },
       () => {
-        // complete function ...
+        //complete function...
         storage
           .ref("images")
           .child(image.name)
           .getDownloadURL()
           .then((url) => {
-            setUrl(url);
-
-            // post image inside db
-            db.collection("posts").add({
-              imageUrl: url,
-              caption: caption,
-              username: username,
+            //post image inside db
+            db.collection("Posts").add({
               timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+              caption: caption,
+              imageUrl: url,
+              username: username,
             });
 
             setProgress(0);
@@ -59,21 +57,16 @@ const ImageUpload = ({ username }) => {
   return (
     <div className="imageupload">
       <progress className="imageupload__progress" value={progress} max="100" />
-      <Input
-        placeholder="Enter a caption"
+      <input
+        type="text"
+        placeholder="Enter a caption..."
+        onChange={(event) => setCaption(event.target.value)}
         value={caption}
-        onChange={(e) => setCaption(e.target.value)}
       />
-      <div>
-        <input type="file" onChange={handleChange} />
-        <Button className="imageupload__button" onClick={handleUpload}>
-          Upload
-        </Button>
-      </div>
-
-      <br />
+      <input type="file" onChange={handleChange} />
+      <Button onClick={handleUpload}>Upload</Button>
     </div>
   );
-};
+}
 
 export default ImageUpload;
